@@ -1,50 +1,43 @@
 import os
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 from app.api import medical, therapy
 
-# Initialize the FastAPI app
 app = FastAPI(
-    title="SmartChemist AI Hub",
-    description="A dual-engine AI for Medical Analysis and Mental Health Support.",
+    title="SmartChemist API",
+    description="Medical Diagnostic and Therapy AI Engine powered by Groq",
     version="1.0.0"
 )
 
-# Enable CORS for frontend integration
+# --- 1. CONFIGURE CORS ---
+# This allows your React frontend (hosted on Render or Vercel) 
+# to communicate with this API without being blocked.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Adjust this to your domain for production
+    allow_origins=["*"],  # For tighter security, replace "*" with your frontend URL later
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Include the routers we created in the /api folder
-app.include_router(medical.router, prefix="/api/v1/medical", tags=["Medical Engine"])
-app.include_router(therapy.router, prefix="/api/v1/therapy", tags=["Therapy Engine"])
+# --- 2. INCLUDE ROUTERS ---
+# Prefixing with v1 is standard practice for Data Science APIs
+app.include_router(medical.router, prefix="/api/v1/medical", tags=["Medical"])
+app.include_router(therapy.router, prefix="/api/v1/therapy", tags=["Therapy"])
 
-# Global Exception Handler for a cleaner API experience
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    return JSONResponse(
-        status_code=500,
-        content={"message": "An internal error occurred", "details": str(exc)},
-    )
-
+# --- 3. HEALTH CHECK ENDPOINT ---
 @app.get("/")
 async def root():
     return {
         "status": "online",
-        "system": "SmartChemist",
-        "endpoints": {
-            "medical": "/api/v1/medical/analyze",
-            "therapy": "/api/v1/therapy/session"
-        }
+        "project": "SmartChemist",
+        "author": "Kennedy Mokaya",
+        "engine": "Llama 3.3 via Groq"
     }
 
+# --- 4. RENDER DEPLOYMENT CONFIG ---
 if __name__ == "__main__":
     import uvicorn
-    # Use the PORT environment variable if available (required for Render)
+    # Render provides a $PORT environment variable
     port = int(os.environ.get("PORT", 8080))
     uvicorn.run("app.main:app", host="0.0.0.0", port=port, reload=True)
