@@ -1,0 +1,16 @@
+
+
+services:
+  api:
+    build: .
+    container_name: smartchemist_container
+    ports:
+      - "8080:10000"  # Maps local port 8080 to container port 10000
+    env_file:
+      - .env
+    volumes:
+      - ./app:/app/app  # Syncs local code for real-time development
+    environment:
+      - PORT=10000
+      - PYTHONUNBUFFERED=1
+    restart: always
